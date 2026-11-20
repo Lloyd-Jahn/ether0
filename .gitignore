@@ -297,3 +297,6 @@ cython_debug/
 
 # Version files made by setuptools_scm
 **/version.py
+
+# Harbor parity runner outputs
+harbor_parity/results/
