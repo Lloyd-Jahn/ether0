@@ -18,10 +18,20 @@ Harbor verifier pins.
 |--------|---------|
 | Problems | `futurehouse/ether0-benchmark` test split @ `c7d5e59960087f360bc32a5006bb994324b38c35`, the 250 problems graded by `str_eval`, `product_eval`, `formula_eval`, `functional_group_eval` |
 | Prompt | `LOOSE_XML_ANSWER_USER_PROMPT` + problem + the adapter's output-file sentence. `check_instructions.py` verifies the prompts are byte-identical to every generated Harbor `instruction.md` |
-| Container | One fresh container per problem from `environment/Dockerfile` (identical to the adapter's task Dockerfile). Agent runs use `environment/Dockerfile.codex`, which is that image plus Codex preinstalled with Harbor's own install steps. Harbor skips its install when the requested Codex version is present, and so does this runner, so both sides use the same image. Two differences from Harbor's runtime install do not affect the agent: apt uses `--no-install-recommends`, which skips e.g. `dbus`, whose post-install fails under rootless runtimes; and an optional `APT_MIRROR` is used only during the build, after which the original apt sources are restored |
+| Container | One fresh container per problem from `environment/Dockerfile` (identical to the adapter's task Dockerfile). Agent runs use `environment/Dockerfile.codex`, which is that image plus Codex preinstalled with Harbor's own install steps. Both sides run Codex 0.166.0 from this image (on the Harbor side, Harbor's Codex agent also runs its standard install step in each trial, which reinstalls the same pinned version). Two differences from Harbor's runtime install do not affect the agent: apt uses `--no-install-recommends`, which skips e.g. `dbus`, whose post-install fails under rootless runtimes; and an optional `APT_MIRROR` is used only during the build, after which the original apt sources are restored |
 | Agent | `codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --model <model> --json --enable unified_exec -c model_reasoning_effort=<effort> -- <prompt>`, with `$CODEX_HOME/config.toml` = `openai_base_url` and `auth.json` = `OPENAI_API_KEY`, as Harbor's Codex agent configures it |
 | Timeout | 1800 s agent timeout (the adapter's `[agent].timeout_sec`) |
 | Scoring | `/app/answer.txt` scored with ether0's reward functions (`test=True`); a missing answer or a reward-function exception scores 0 |
+
+## Results
+
+All 250 problems, 3 runs per side, codex@0.166.0 + gpt-5-mini (reasoning effort medium); accuracy (%),
+mean ± sample SEM:
+
+| Side | Run 1 | Run 2 | Run 3 | Mean ± SEM |
+|------|-------|-------|-------|------------|
+| Original (this runner) | 40.0 | 37.6 | 39.6 | 39.07 ± 0.74 |
+| Harbor adapter | 40.0 | 39.2 | 40.0 | 39.73 ± 0.27 |
 
 ## Reproduce
 
